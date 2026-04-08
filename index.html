@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Letter Vol.1 → Substack Pipeline</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b65;
+    --text-tertiary: #9a9a93;
+    --bg-secondary: #f0efe9;
+    --success-bg: #e8f5ee;
+    --success-border: #4caf7d;
+    --success-text: #1a5c35;
+  }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  header .label {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: normal;
+    color: var(--text-primary);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  header p {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .phases { display: flex; flex-direction: column; gap: 12px; }
+
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .phase:hover { border-color: var(--border-strong); }
+
+  .phase-top {
+    display: flex;
+    align-items: stretch;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .accent { width: 4px; flex-shrink: 0; }
+
+  .phase-body {
+    flex: 1;
+    padding: 14px 16px;
+  }
+
+  .phase-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .phase-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-primary);
+    line-height: 1.4;
+    font-family: 'Courier New', monospace;
+  }
+
+  .phase-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.6;
+    font-family: 'Georgia', serif;
+  }
+
+  .phase-time {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 90px;
+    line-height: 1.5;
+  }
+
+  .progress-wrap {
+    background: var(--bg-secondary);
+    border-radius: 99px;
+    height: 2px;
+    margin-top: 10px;
+  }
+
+  .progress-fill {
+    height: 2px;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-lbl {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  .phase-expand {
+    display: none;
+    padding: 0 16px 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .phase-expand.open { display: block; }
+
+  .task-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .task-row:last-of-type { border-bottom: none; }
+
+  .cb {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: white;
+  }
+
+  .cb.done {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+  }
+
+  .cb-svg { display: none; width: 9px; height: 7px; }
+  .cb-svg path { stroke: var(--success-text); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .cb.done .cb-svg { display: block; }
+
+  .task-text {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.55;
+    font-family: 'Georgia', serif;
+  }
+
+  .task-text.done {
+    color: var(--text-tertiary);
+    text-decoration: line-through;
+  }
+
+  .task-note {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+
+  .infobox {
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    font-family: 'Georgia', serif;
+    border-left: 2px solid var(--border-strong);
+  }
+
+  .infobox strong {
+    font-weight: bold;
+    color: var(--text-primary);
+  }
+
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="label">Publishing pipeline</div>
+    <h1>Open Letter Vol.1 → Substack</h1>
+    <p>Four phases. ~5 hours across 3 days. Tap each phase to expand.</p>
+  </header>
+
+  <div class="phases" id="phases"></div>
+
+  <footer>Signal from noise project · April 2026</footer>
+</div>
+
+<script>
+const PHASES = [
+  {
+    id:"p1",
+    accent:"#7F77DD",
+    title:"Phase 1 — accept the structural edit decisions",
+    sub:"The full structural edit already happened. This phase is just you saying yes or no to each major recommendation. Not rewriting yet — just deciding.",
+    time:"45 min\ntoday or tomorrow",
+    tasks:[
+      {t:"Read the proposed new ending. Accept it, reject it, or write a 3-sentence version of your own.", note:"The previous Claude's ending is solid but slightly generic in the final lines. Your voice is sharper."},
+      {t:"Decide on the apartment/homesteader tangent: cut entirely, or reduce to one sentence?", note:"Recommendation: cut. It belongs in a different piece about capitalism and land."},
+      {t:"Decide on the terminally online / media criticism section: cut or reduce to 2 sentences?", note:"Toffler quote stays. The rest of that section dilutes the MLE argument."},
+      {t:"Confirm: does the queer erasure paragraph stay where it is, or move up after the Murthy section?", note:"Moving it up makes the MLE argument structurally stronger — it becomes the counter-evidence that breaks the narrative early."},
+    ],
+    info:"You're not writing yet. You're making 4 binary decisions. This phase should feel like triage, not craft."
+  },
+  {
+    id:"p2",
+    accent:"#1D9E75",
+    title:"Phase 2 — source the key claims",
+    sub:"Several assertions in the letter need sourcing before publication or they'll be easy to dismiss. Research task, not a rewrite.",
+    time:"1 hr\nsame day or next",
+    tasks:[
+      {t:"Murthy stats confirmed: 1 in 2 adults, 15 cigarettes/day equivalent, 29% premature death increase.", note:'Source: "Our Epidemic of Loneliness and Isolation," Surgeon General\'s Advisory, May 2023. All stats verified accurate.'},
+      {t:"Male friendship data confirmed: 15% of men no close friends in 2021, up from 3% in 1990 (fivefold).", note:"Source: Survey Center on American Life, American Perspectives Survey, May 2021. Bonus: 2024 data shows women nearly identical (16%), which strengthens your argument."},
+      {t:"YouTube pipeline confirmed: large-scale study documented systematic user migration from mild to extreme content.", note:'Source: Ribeiro et al., "Auditing Radicalization Pathways on YouTube," WebSci 2020. Also covered by NYT\'s Kevin Roose.'},
+      {t:'Toffler quote clarified: from Powershift (1990), not Future Shock. Originally paraphrasing psychologist Herbert Gerjuoy.', note:'Use: "Alvin Toffler wrote in Powershift that..." — attribution is clean. The irony of the paraphrase chain is optional to include.'},
+    ],
+    info:"<strong>All four sources are verified.</strong> Inline citation language is ready — see the sourcing session in this project for exact suggested phrasing for each claim."
+  },
+  {
+    id:"p3",
+    accent:"#BA7517",
+    title:"Phase 3 — the rewrite pass",
+    sub:"One focused session. You have the structure, the edit notes, the sourcing. This is the pass where your voice goes back in everywhere it got flattened.",
+    time:"2–2.5 hrs\nday 2 or 3",
+    tasks:[
+      {t:"Execute the cuts (~800 words identified): homesteader tangent, terminally online media section, redundant cynicism commentary.", note:"Cut these first. Removing them reveals the actual structure underneath."},
+      {t:"Rewrite the opening misandry point to land as a clear second thesis, not a buried complaint.", note:"It got set up in the opening and almost never resolved. Give it a payoff."},
+      {t:"Move the queer erasure paragraph if you decided to in Phase 1. Add one transition sentence.", note:""},
+      {t:"Rewrite or accept the proposed ending. Land the misandry-as-self-hatred synthesis — that's the climax the whole piece is building toward.", note:"'The real enemy is the system that pits us against each other' is the thesis. Make the last paragraph embody it."},
+      {t:"Read aloud once. Where you stumble, the sentence needs work. Where it flows, leave it.", note:"Your speaking voice and writing voice are very close. Stumbling is always a signal."},
+    ],
+    info:"Target length after this pass: <strong>2,200–2,400 words.</strong> Current draft is ~3,200. The cuts bring it down; any additions should be targeted, not additive."
+  },
+  {
+    id:"p4",
+    accent:"#D4537E",
+    title:"Phase 4 — Substack publish",
+    sub:"Format, title, metadata, and post. Batch all small decisions so they don't become a reason to delay.",
+    time:"45 min\nday 3",
+    tasks:[
+      {t:'Choose a title. Strongest option: "Dear Beautiful People" as series name, argument as subtitle.', note:"Your existing opening line is your best title. The series framing sets up Vol.2, Vol.3, etc."},
+      {t:"Write a 2-sentence Substack preview/subtitle that surfaces in email previews.", note:"Most important SEO and open-rate lever. Spend 10 minutes on just this."},
+      {t:"Decide: paid post, free post, or free with paid CTA at the bottom?", note:"For a first piece in this series, free maximizes reach. Add a simple 'if this resonated, subscribe' line at the end."},
+      {t:"Choose one pull quote for social (TikTok / Bluesky). The water/beer analogy is your strongest visual moment.", note:"'They want to wage war against water because they got sick from the well' — record that as a TikTok the day you publish."},
+      {t:"Publish. Then close the tab. Don't refresh analytics for 24 hours.", note:"Seriously. The first 24 hours create a feedback loop that distorts what you make next."},
+    ],
+    info:"The water/beer analogy is your signature moment in this piece. Whatever else gets cut or changed, <strong>that stays.</strong> It's the kind of thing people screenshot."
+  }
+];
+
+const checks = {};
+
+function toggle(pid, ti) {
+  const k = pid + "-" + ti;
+  checks[k] = !checks[k];
+  document.getElementById("cb-" + k).classList.toggle("done", checks[k]);
+  document.getElementById("st-" + k).classList.toggle("done", checks[k]);
+  updateProgress(pid);
+}
+
+function updateProgress(pid) {
+  const phase = PHASES.find(p => p.id === pid);
+  let done = 0;
+  phase.tasks.forEach((_, ti) => { if (checks[pid + "-" + ti]) done++; });
+  const pct = Math.round(done / phase.tasks.length * 100);
+  document.getElementById("pb-" + pid).style.width = pct + "%";
+  document.getElementById("pl-" + pid).textContent = done + " / " + phase.tasks.length;
+}
+
+function toggleExpand(pid) {
+  document.getElementById("ex-" + pid).classList.toggle("open");
+}
+
+document.getElementById("phases").innerHTML = PHASES.map(phase => `
+  <div class="phase">
+    <div class="phase-top" onclick="toggleExpand('${phase.id}')">
+      <div class="accent" style="background:${phase.accent}"></div>
+      <div class="phase-body">
+        <div class="phase-row">
+          <div style="flex:1">
+            <div class="phase-title">${phase.title}</div>
+            <div class="phase-sub">${phase.sub}</div>
+          </div>
+          <div class="phase-time">${phase.time.replace('\n','<br>')}</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="pb-${phase.id}" style="width:0%;background:${phase.accent}"></div>
+        </div>
+        <div class="progress-lbl" id="pl-${phase.id}">0 / ${phase.tasks.length}</div>
+      </div>
+    </div>
+    <div class="phase-expand" id="ex-${phase.id}">
+      ${phase.tasks.map((task, ti) => `
+        <div class="task-row" onclick="toggle('${phase.id}',${ti})">
+          <div class="cb" id="cb-${phase.id}-${ti}">
+            <svg class="cb-svg" viewBox="0 0 9 7"><path d="M1 3.5L3.5 6L8 1"/></svg>
+          </div>
+          <div>
+            <div class="task-text" id="st-${phase.id}-${ti}">${task.t}</div>
+            ${task.note ? `<div class="task-note">${task.note}</div>` : ''}
+          </div>
+        </div>
+      `).join("")}
+      <div class="infobox">${phase.info}</div>
+    </div>
+  </div>
+`).join("");
+</script>
+</body>
+</html>
